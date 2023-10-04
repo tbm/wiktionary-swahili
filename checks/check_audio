@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+"""
+Check the file information in {{audio}} templates against
+the entry name to ensure they match.
+"""
+
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from pathlib import Path
+import unidecode
+
+import mwparserfromhell
+
+DIR = Path("/home/tbm/tmp/wiktionary/swahili")
+
+
+def parse_audio(audio):
+    """
+    Extract the entry name from an audio file
+    """
+    audio = audio.replace(".flac", "")
+    audio = audio.replace(".oga", "")
+    audio = audio.strip("-")
+    audio = unidecode.unidecode(audio)  # strip stress markers (e.g. mújibu)
+    if audio.startswith("Sw-ke-"):
+        audio = audio.removeprefix("Sw-ke-")
+        audio = audio.replace("_", " ")
+        return audio
+    if audio.startswith("Sw-"):
+        audio = audio.removeprefix("Sw-")
+        return audio
+    print("Don't know how to handle:", audio)
+    return audio
+
+
+def check_audio(filepath):
+    """
+    Check the file information from {{audio}} against the entry name
+    """
+    with open(filepath, "r", encoding="utf-8") as entry_fp:
+        text = entry_fp.read()
+    wikicode = mwparserfromhell.parse(text)
+    for template in wikicode.filter_templates():
+        if template.name != "audio":
+            continue
+        audio = parse_audio(template.get("2"))
+        entry = filepath.name
+        entry = entry.strip("-")
+        if entry.lower() != audio.lower():
+            print(f"Mismatch entry {filepath.name}: {audio}")
+
+
+def check_all_audio():
+    """
+    Check all entries in the directory
+    """
+    for filepath in sorted(DIR.glob("*")):
+        if not filepath.is_file():
+            continue
+        check_audio(filepath)
+
+
+if __name__ == "__main__":
+    check_all_audio()

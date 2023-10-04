@@ -34,32 +34,30 @@ def parse_audio(audio):
     return audio
 
 
-def check_audio(filepath):
+def check_audio(entry_name, entry):
     """
     Check the file information from {{audio}} against the entry name
     """
-    with open(filepath, "r", encoding="utf-8") as entry_fp:
-        text = entry_fp.read()
-    wikicode = mwparserfromhell.parse(text)
+    wikicode = mwparserfromhell.parse(entry)
     for template in wikicode.filter_templates():
         if template.name != "audio":
             continue
         audio = parse_audio(template.get("2"))
-        entry = filepath.name
-        entry = entry.strip("-")
-        if entry.lower() != audio.lower():
-            print(f"Mismatch entry {filepath.name}: {audio}")
+        if entry_name.strip("-").lower() != audio.lower():
+            print(f"Mismatch entry {entry_name}: {audio}")
 
 
-def check_all_audio():
+def check_all_entries(directory, check):
     """
     Check all entries in the directory
     """
-    for filepath in sorted(DIR.glob("*")):
+    for filepath in sorted(directory.glob("*")):
         if not filepath.is_file():
             continue
-        check_audio(filepath)
+        with open(filepath, "r", encoding="utf-8") as entry_fp:
+            entry = entry_fp.read()
+        check(filepath.name, entry)
 
 
 if __name__ == "__main__":
-    check_all_audio()
+    check_all_entries(DIR, check_audio)

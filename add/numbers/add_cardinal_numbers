@@ -101,6 +101,9 @@ def add_cardinal_numbers():
         english = num2words(number, lang="en")
         entry = create_entry(number, swahili, english)
         page = pywikibot.Page(site, swahili)
+        if page.exists():
+            print(f"Page {page} exists")
+            continue
         print("Creating", page.title())
         print(entry)
         edit = input("Create page (Y/n): ")

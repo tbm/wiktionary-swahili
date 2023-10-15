@@ -74,7 +74,7 @@ def add_entry(page, entry):
     Create page on Wiktionary
     """
     if page.exists():
-        print("Page {page} exists")
+        print(f"Page {page} exists")
         return
     page.text = entry
     page.save(entry, minor=False)

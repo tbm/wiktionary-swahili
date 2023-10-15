@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+
+"""
+Create cardinal numbers for Swahili
+
+This requires num2words from https://github.com/savoirfairelinux/num2words/
+    pip3 install num2words
+"""
+
+from num2words import num2words
+import pywikibot
+
+SW_ONE = [
+    "sifuri",
+    "moja",
+    "mbili",
+    "tatu",
+    "nne",
+    "tano",
+    "sita",
+    "saba",
+    "nane",
+    "tisa",
+]
+
+SW_TEN = [
+    "",
+    "kumi",
+    "ishirini",
+    "thelathini",
+    "arobaini",
+    "hamsini",
+    "sitini",
+    "sabini",
+    "themanini",
+    "tisini",
+]
+
+
+def number_to_swahili(number):
+    """
+    Create Swahili number from an integer.  This is a very limited
+    implementation.
+    """
+    if not 11 <= number <= 99:
+        raise NotImplementedError
+    if number % 10 == 0:
+        raise NotImplementedError
+    return SW_TEN[number // 10] + " na " + SW_ONE[number % 10]
+
+
+def create_entry(number, swahili, english):
+    """
+    Create Swahili entry for Wiktionary.
+    """
+    return f"""==Swahili==
+{{{{number box|sw|{number}}}}}
+
+===Pronunciation===
+* {{{{audio|sw|Sw-ke-{swahili}.flac|Audio (Kenya)}}}}
+
+===Numeral===
+{{{{sw-numeral|inv}}}}
+
+# {{{{cln|sw|cardinal numbers}}}} [[{english}]]
+
+====Coordinate terms====
+{{{{sw-cardinals}}}}
+"""
+
+
+def add_entry(page, entry):
+    """
+    Create page on Wiktionary
+    """
+    if page.exists():
+        print("Page {page} exists")
+        return
+    page.text = entry
+    page.save(entry, minor=False)
+
+
+def add_cardinal_numbers():
+    """
+    Create cardinal numbers for Swahili
+    """
+    site = pywikibot.Site("en", "wiktionary")
+    for number in range(20, 100):
+        # Skip since they exist already
+        if number % 10 == 0:
+            continue
+        # I don't know if numbers ending in 1 ("moja") needs to be inflected the
+        # same way as "kumi na moja", so skip them for now.
+        if number % 10 == 1:
+            continue
+        # There's a pull request to implement Swahili for num2words:
+        # https://github.com/savoirfairelinux/num2words/pull/539/commits
+        # My number_to_swahili() code can be removed once this is merged.
+        # swahili = num2words(number, lang="sw")
+        swahili = number_to_swahili(number)
+        english = num2words(number, lang="en")
+        entry = create_entry(number, swahili, english)
+        page = pywikibot.Page(site, swahili)
+        print("Creating", page.title())
+        print(entry)
+        edit = input("Create page (Y/n): ")
+        if not edit.upper() == "N":
+            add_entry(page, entry)
+
+
+if __name__ == "__main__":
+    add_cardinal_numbers()
